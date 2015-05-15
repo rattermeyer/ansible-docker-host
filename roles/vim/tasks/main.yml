@@ -23,7 +23,7 @@
   copy: src=/home/vagrant/.vim/bundle/vim-colorschemes/colors/solarized.vim dest=/home/vagrant/.vim/colors
   tags:
     - vim
-- command: vim +PluginInstall +qall now
+- git: repo=https://github.com/Valloric/YouCompleteMe.git dest=/home/vagrant/.vim/bundle/YouCompleteMe
   tags:
     - vim
 - command: /home/vagrant/.vim/bundle/YouCompleteMe/install.sh
@@ -33,3 +33,6 @@
   tags:
     - vim
     - YCM
+- command: vim +PluginInstall +qall now
+  tags:
+    - vim
