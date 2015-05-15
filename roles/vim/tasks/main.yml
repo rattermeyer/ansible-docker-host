@@ -12,7 +12,7 @@
 - git: repo=https://github.com/gmarik/Vundle.vim.git dest=/home/vagrant/.vim/bundle/Vundle.vim
   tags:
     - vim
-- file: src=vim.j2 path=/home/vagrant/.vimrc
+- copy: src=vimrc path=/home/vagrant/.vimrc owner=vagrant group=vagrant
   tags:
     - vim
 - command: vim +PluginInstall +qall now

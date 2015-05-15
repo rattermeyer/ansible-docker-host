@@ -18,6 +18,8 @@
   when: result|success
 - shell: service docker restart
   when: result|success
+- shell: ifdata -pa docker0
+  register: facter_ipaddress_eth0
 - group: name=docker state=present
 
 - name: add vagrant to docker group
