@@ -18,9 +18,10 @@
   when: result|success
 - shell: service docker restart
   when: result|success
-- shell: ifdata -pa docker0
+
+- name: "set fact docker bridge ip"
+  shell: ifdata -pa docker0
   register: docker_bridge_ip
-- debug: msg="facter facter_ipaddress_docker0={{docker_bridge_ip.stdout_lines[0]}}"
 - set_fact: facter_ipaddress_docker0={{docker_bridge_ip.stdout_lines[0]}}
 - group: name=docker state=present
 
