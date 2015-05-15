@@ -48,6 +48,7 @@
     - "{{facter_ipaddress_docker0}}:53:53/udp"
     hostname: "node1"
     command: "-server -advertise {{facter_ipaddress_eth0}} -bootstrap -ui-dir /ui"
+    restart_policy: always
   ignore_errors: yes
 - name: run shipyard
   command: docker run --rm -v /var/run/docker.sock:/var/run/docker.sock shipyard/deploy start 
@@ -62,6 +63,7 @@
     volumes:
     - "/var/run/docker.sock:/tmp/docker.sock" 
     command: "consul://{{ansible_default_ipv4.address}}:8500"
+    restart_policy: always
   ignore_errors: yes
 # restart_policy to add when ansible 1.9 is available
 - name: run docker registry
@@ -71,5 +73,6 @@
     - "5000:5000"
     volumes:
     - "/opt/docker-registry:/tmp/registry"
+    restart_policy: always
   ignore_errors: yes
 

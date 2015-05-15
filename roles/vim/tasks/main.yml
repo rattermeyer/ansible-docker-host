@@ -29,6 +29,7 @@
 - command: /home/vagrant/.vim/bundle/YouCompleteMe/install.sh
   args:
     chdir: /home/vagrant/.vim/bundle/YouCompleteMe/
+    creates: /home/vagrant/.vim/bundle/YouCompleteMe/python/ycm/youcompleteme.pyc
   tags:
     - vim
     - YCM
