@@ -15,6 +15,14 @@
 - copy: src=vimrc dest=/home/vagrant/.vimrc owner=vagrant group=vagrant
   tags:
     - vim
+- name: clone vim-colorschemes
+  git: repo=https://github.com/flazz/vim-colorschemes.git dest=/home/vagrant/.vim/bundle/vim-colorschemes
+  tags:
+    - vim
+- name: copy solarized
+  copy: src=/home/vagrant/.vim/bundle/vim-colorschemes/colors/solarized.vim dest=/home/vagrant/.vim/colors
+  tags:
+    - vim
 - command: vim +PluginInstall +qall now
   tags:
     - vim
