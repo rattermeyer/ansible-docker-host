@@ -19,7 +19,9 @@
 - shell: service docker restart
   when: result|success
 - shell: ifdata -pa docker0
-  register: facter_ipaddress_eth0
+  register: docker_bridge_ip
+- debug: msg="facter facter_ipaddress_docker0={{docker_bridge_ip.stdout_lines[0]}}"
+- set_fact: facter_ipaddress_docker0={{docker_bridge_ip.stdout_lines[0]}}
 - group: name=docker state=present
 
 - name: add vagrant to docker group
@@ -30,10 +32,7 @@
 - shell: update-grub
 
 - name: Install Docker Compose
-  shell: curl -L https://github.com/docker/compose/releases/download/1.2.0/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
-  args:
-    creates: /usr/local/bin/docker-compose
-- file: path=/usr/local/bin/docker-compose mode="a+x"
+  get_url: url=https://github.com/docker/compose/releases/download/1.2.0/docker-compose-{{ansible_system}}-{{ansible_architecture}} dest=/usr/local/bin/docker-compose mode=0755
 
 # restart_policy to add when ansible 1.9 is available
 #      command: docker run -d --name="consul" -h "node1" -p {{facter_ipaddress_eth0}}:8400:8400 -p {{facter_ipaddress_eth0}}:8500:8500 -p {{facter_ipaddress_eth0}}:8600:53/udp -p {{facter_ipaddress_docker0}}:53:53/udp progrium/consul -server -advertise {{facter_ipaddress_eth0}} -bootstrap -ui-dir /ui
