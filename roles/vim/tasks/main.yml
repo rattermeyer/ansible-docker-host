@@ -1,0 +1,26 @@
+- name: install vim
+  apt: package={{item}}
+  with_items:
+  - vim
+  - vim-youcompleteme
+  tags:
+    - vim
+- name: install vundle
+  file: path=/home/vagrant/.vim/bundle state=directory 
+  tags:
+    - vim
+- git: repo=https://github.com/gmarik/Vundle.vim.git dest=/home/vagrant/.vim/bundle/Vundle.vim
+  tags:
+    - vim
+- file: src=vim.j2 path=/home/vagrant/.vimrc
+  tags:
+    - vim
+- command: vim +PluginInstall +qall now
+  tags:
+    - vim
+- command: /home/vagrant/.vim/bundle/YouCompleteMe/install.sh
+  args:
+    chdir: /home/vagrant/.vim/bundle/YouCompleteMe/
+  tags:
+    - vim
+    - YCM
