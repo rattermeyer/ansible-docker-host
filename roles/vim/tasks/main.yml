@@ -1,38 +1,34 @@
-- name: install vim
-  apt: package={{item}}
+# vim: noai:ts=2:sw=2:expandtab
+---
+- apt: name={{item}} state=present 
   with_items:
-  - vim
-  - vim-youcompleteme
-  tags:
     - vim
-- name: install vundle
-  file: path=/home/vagrant/.vim/bundle state=directory 
-  tags:
-    - vim
-- git: repo=https://github.com/gmarik/Vundle.vim.git dest=/home/vagrant/.vim/bundle/Vundle.vim
-  tags:
-    - vim
-- copy: src=vimrc dest=/home/vagrant/.vimrc owner=vagrant group=vagrant
-  tags:
-    - vim
-- name: clone vim-colorschemes
-  git: repo=https://github.com/flazz/vim-colorschemes.git dest=/home/vagrant/.vim/bundle/vim-colorschemes
-  tags:
-    - vim
-- name: copy solarized
-  copy: src=/home/vagrant/.vim/bundle/vim-colorschemes/colors/solarized.vim dest=/home/vagrant/.vim/colors
-  tags:
-    - vim
-- git: repo=https://github.com/Valloric/YouCompleteMe.git dest=/home/vagrant/.vim/bundle/YouCompleteMe
-  tags:
-    - vim
-- command: /home/vagrant/.vim/bundle/YouCompleteMe/install.sh
+    - build-essential
+    - cmake
+    - python-dev
+
+- name: Install Vundle
+  git: repo=https://github.com/gmarik/Vundle.vim.git dest={{home}}/.vim/bundle/Vundle.vim
+  become: true
+  become_user: "{{user}}"
+
+- name: Download vimrc
+  get_url: url="https://gist.githubusercontent.com/rattermeyer/4f2b0d48069a2f5345fd/raw/51d5baa6458ebb99662338542b6bc8b2b1391e42/vimrc" dest={{home}}/.vimrc
+  become: true
+  become_user: "{{user}}"
+
+- name: YouCompleteMe
+  git: repo=https://github.com/Valloric/YouCompleteMe.git dest={{home}}/.vim/bundle/YouCompleteMe
+  become: true
+  become_user: "{{user}}"
+
+- name: YouCompleteMe compile
+  command: ./install.sh --clang-completer 
   args:
-    chdir: /home/vagrant/.vim/bundle/YouCompleteMe/
-    creates: /home/vagrant/.vim/bundle/YouCompleteMe/python/ycm/youcompleteme.pyc
-  tags:
-    - vim
-    - YCM
-- command: vim +PluginInstall +qall now
-  tags:
-    - vim
+    chdir: "{{home}}/.vim/bundle/YouCompleteMe"
+    creates: "{{home}}/.vim/bundle/YouCompleteMe/third_party/ycmd/libclang.so"
+
+- name: PluginInstall via vim
+  command: vim +PluginInstall +qall 2&> /dev/null
+  become: true
+  become_user: "{{user}}"

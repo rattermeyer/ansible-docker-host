@@ -11,7 +11,10 @@
   register: result
 - apt: name=python-pip
 - shell: easy_install -U pip
-- pip: name=docker-py version=1.1.0
+
+# If I remember correctly forced to 1.1.0 because of dependencies, I do not remember
+- pip: name=docker-py version=1.1.0 
+
 - shell: /tmp/setup-docker.sh creates=/usr/bin/docker
   when: result|success
 - template: src=docker.j2 dest=/etc/default/docker owner=root group=root mode=0644 backup=yes
@@ -19,54 +22,50 @@
 - shell: service docker restart
   when: result|success
 
-- name: "set fact docker bridge ip"
-  shell: ifdata -pa docker0
-  register: docker_bridge_ip
-- set_fact: facter_ipaddress_docker0={{docker_bridge_ip.stdout_lines[0]}}
 - group: name=docker state=present
 
-- name: add vagrant to docker group
-  user: name=vagrant groups=docker append=yes
+- name: "add {{ user }} to docker group"
+  user: name={{ user }} groups=docker append=yes
 
 - name: Adjust memory and swap accounting
   lineinfile: dest=/etc/default/grub line="GRUB_CMDLINE_LINUX=\"cgroup_enable=memory swapaccount=1\""
 - shell: update-grub
 
 - name: Install Docker Compose
-  get_url: url=https://github.com/docker/compose/releases/download/1.2.0/docker-compose-{{ansible_system}}-{{ansible_architecture}} dest=/usr/local/bin/docker-compose mode=0755
+  get_url: url="https://github.com/docker/compose/releases/download/{{ docker_compose_version }}/docker-compose-{{ansible_system}}-{{ansible_architecture}}" dest=/usr/local/bin/docker-compose mode=0755 force=yes
+- name: Install Docker Compose bash completion
+  get_url: url="https://raw.githubusercontent.com/docker/compose/{{ docker_compose_version }}/contrib/completion/bash/docker-compose" dest=/etc/bash_completion.d/docker-compose
 
-# restart_policy to add when ansible 1.9 is available
-#      command: docker run -d --name="consul" -h "node1" -p {{facter_ipaddress_eth0}}:8400:8400 -p {{facter_ipaddress_eth0}}:8500:8500 -p {{facter_ipaddress_eth0}}:8600:53/udp -p {{facter_ipaddress_docker0}}:53:53/udp progrium/consul -server -advertise {{facter_ipaddress_eth0}} -bootstrap -ui-dir /ui
 - name: run consul
   docker:
     name: consul
     image: progrium/consul
     ports:
-    - "{{facter_ipaddress_eth0}}:8400:8400"
-    - "{{facter_ipaddress_eth0}}:8500:8500"
-    - "{{facter_ipaddress_eth0}}:8600:53/udp"
-    - "{{facter_ipaddress_docker0}}:53:53/udp"
+    - "{{ansible_default_ipv4.address}}}:8400:8400"
+    - "{{ansible_default_ipv4.address}}:8500:8500"
+    - "{{ansible_default_ipv4.address}}:8600:53/udp"
+    - "{{ansible_docker0.ipv4.address}}:53:53/udp"
     hostname: "node1"
-    command: "-server -advertise {{facter_ipaddress_eth0}} -bootstrap -ui-dir /ui"
+    command: "-server -advertise {{ansible_default_ipv4.address}} -bootstrap -ui-dir /ui"
     restart_policy: always
   ignore_errors: yes
 - name: run shipyard
   command: docker run --rm -v /var/run/docker.sock:/var/run/docker.sock shipyard/deploy start 
   args:
-      creates: /home/vagrant/shipyard.done
-- command: touch /home/vagrant/shipyard.done
-# restart_policy to add when ansible 1.9 is available
+      creates: "{{home}}/shipyard.done"
+- command: touch {{home}}/shipyard.done
+
 - name: run registrator
   docker: 
     image: gliderlabs/registrator
-    hostname: "{{facter_hostname}}" 
+    hostname: "{{ansible_hostname}}" 
     volumes:
     - "/var/run/docker.sock:/tmp/docker.sock" 
     command: "consul://{{ansible_default_ipv4.address}}:8500"
     restart_policy: always
   ignore_errors: yes
-# restart_policy to add when ansible 1.9 is available
-- name: run docker registry
+
+- name: run docker registry as mirror
   docker: 
     image: registry 
     ports:
@@ -74,5 +73,9 @@
     volumes:
     - "/opt/docker-registry:/tmp/registry"
     restart_policy: always
+    env:
+      STANDALONE: false
+      MIRROR_SOURCE: https://registry-1.docker.io
+      MIRROR_SOURCE_INDEX: https://index.docker.io
   ignore_errors: yes
 
